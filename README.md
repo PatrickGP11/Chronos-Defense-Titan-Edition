@@ -1,8 +1,8 @@
-# 🛡️ Chrono Defense: Nightmare Edition
+# 🛡️ Chronos Defense: Nightmare Edition
 
 > **Um Tower Defense Educacional "Hardcore" desenvolvido com HTML5, CSS3 e JavaScript Puro.**
 
-O **Chrono Defense** é um jogo de estratégia onde o conhecimento é sua única munição. Diferente de jogos educativos tradicionais, esta versão **Nightmare** foi desenhada para ser desafiadora, punitiva e estratégica, introduzindo mecânicas de economia inflacionária e inimigos que reagem aos erros do jogador.
+O **Chronos Defense** é um jogo de estratégia onde o conhecimento é sua única munição. Diferente de jogos educativos tradicionais, esta versão **Nightmare** foi desenhada para ser desafiadora, punitiva e estratégica, introduzindo mecânicas de economia inflacionária e inimigos que reagem aos erros do jogador.
 
 ## 📱 Jogue Onde Quiser (Responsivo)
 O projeto foi atualizado com **CSS Media Queries** e **Cálculo de Escala no Canvas**, tornando-o 100% jogável em Desktops, Tablets e Smartphones.
