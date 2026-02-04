@@ -1,0 +1,146 @@
+/* style.css */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #1a1a2e;
+    color: #fff;
+    font-family: 'Segoe UI', sans-serif;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#game-wrapper {
+    display: flex;
+    gap: 20px;
+    background: #16213e;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    border: 2px solid #0f3460;
+}
+
+canvas {
+    background: #0f3460;
+    border-radius: 8px;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+    cursor: crosshair;
+}
+
+#ui-sidebar {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.card {
+    background: #1a1a2e;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #e94560;
+}
+
+h2,
+h3 {
+    margin: 0 0 10px 0;
+    color: #e94560;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* Área de Perguntas */
+#quiz-container {
+    background: linear-gradient(145deg, #16213e, #1a1a2e);
+    border: 1px solid #4cc9f0;
+    padding: 15px;
+    border-radius: 10px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.category-tag {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    color: #4cc9f0;
+}
+
+.question-text {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    min-height: 50px;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.btn-opt {
+    background: #0f3460;
+    border: 1px solid #4cc9f0;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-opt:hover {
+    background: #4cc9f0;
+    color: #000;
+}
+
+.btn-opt:active {
+    transform: scale(0.95);
+}
+
+/* Feedback Visual */
+.correct {
+    animation: flashGreen 0.5s;
+}
+
+.wrong {
+    animation: shakeRed 0.5s;
+}
+
+@keyframes flashGreen {
+    0% {
+        background: #2ecc71;
+    }
+
+    100% {
+        background: #1a1a2e;
+    }
+}
+
+@keyframes shakeRed {
+    0% {
+        transform: translateX(0);
+        background: #e74c3c;
+    }
+
+    25% {
+        transform: translateX(5px);
+    }
+
+    75% {
+        transform: translateX(-5px);
+    }
+
+    100% {
+        transform: translateX(0);
+        background: #1a1a2e;
+    }
+}

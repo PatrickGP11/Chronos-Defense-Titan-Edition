@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chrono Defense - Titan Edition</title>
+    <link rel="shortcut icon" href="assets/icons8-torre-16.png" type="image/tower.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="game-wrapper">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="ui-sidebar">
+            <div class="card">
+                <h2>📊 Status</h2>
+                <div class="stats-row">
+                    <span>⚡ Energia: <span id="energy-val">100</span></span>
+                    <span>❤️ Vidas: <span id="lives-val">5</span></span>
+                </div>
+                <button id="btn-buy" class="btn-opt"
+                    style="width:100%; margin-top:15px; background:#2ecc71; border:none;">
+                    Comprar Torre (100⚡)
+                </button>
+            </div>
+
+            <div id="quiz-container" class="card">
+                <h3>📚 Banco de Dados</h3>
+                <div id="cat-tag" class="category-tag">Carregando...</div>
+                <div id="q-text" class="question-text">...</div>
+                <div id="options" class="options-grid">
+                </div>
+            </div>
+
+            <div style="text-align:center; font-size:0.8rem; color:#888;">
+                Clique em "Comprar Torre" e depois no mapa para posicionar.
+            </div>
+        </div>
+    </div>
+
+    <script src="database.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
