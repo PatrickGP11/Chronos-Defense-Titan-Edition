@@ -1,4 +1,4 @@
-# 🛡️ Chrono Defense: Titan Edition
+# 🛡️ Chronos Defense: Titan Edition
 
 > **Um Tower Defense Educacional desenvolvido com HTML5, CSS3 e JavaScript Puro.**
 
