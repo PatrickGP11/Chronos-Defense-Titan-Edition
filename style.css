@@ -1,25 +1,30 @@
-/* style.css */
+/* style.css - Versão Responsiva Mobile */
+
 body {
     margin: 0;
     padding: 0;
     background-color: #1a1a2e;
     color: #fff;
     font-family: 'Segoe UI', sans-serif;
-    overflow: hidden;
+    /* Removemos o 'height: 100vh' fixo para permitir rolagem no mobile se precisar */
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 #game-wrapper {
     display: flex;
     gap: 20px;
     background: #16213e;
-    padding: 20px;
+    padding: 15px;
     border-radius: 15px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     border: 2px solid #0f3460;
+    max-width: 1200px;
+    width: 100%;
 }
 
 canvas {
@@ -27,15 +32,52 @@ canvas {
     border-radius: 8px;
     box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
     cursor: crosshair;
+    /* Mágica da Responsividade: */
+    width: 100%;
+    /* Tenta ocupar espaço disponível */
+    max-width: 800px;
+    /* Mas não passa de 800px */
+    height: auto;
+    /* Mantém a proporção correta */
+    object-fit: contain;
 }
 
 #ui-sidebar {
-    width: 300px;
+    width: 320px;
+    min-width: 300px;
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
+/* --- ESTILOS MOBILE (Telas menores que 900px) --- */
+@media (max-width: 900px) {
+    #game-wrapper {
+        flex-direction: column;
+        /* Empilha verticalmente */
+        align-items: center;
+        padding: 10px;
+    }
+
+    #ui-sidebar {
+        width: 100%;
+        /* Sidebar ocupa largura total */
+        min-width: 0;
+    }
+
+    /* Reorganizar a ordem visual no mobile se quiser: */
+    canvas {
+        order: 1;
+        /* Mapa em cima */
+    }
+
+    #ui-sidebar {
+        order: 2;
+        /* Perguntas embaixo */
+    }
+}
+
+/* Restante do CSS (Cards, Botões) mantém igual */
 .card {
     background: #1a1a2e;
     padding: 15px;
@@ -56,7 +98,6 @@ h3 {
     font-weight: bold;
 }
 
-/* Área de Perguntas */
 #quiz-container {
     background: linear-gradient(145deg, #16213e, #1a1a2e);
     border: 1px solid #4cc9f0;
@@ -87,14 +128,19 @@ h3 {
     gap: 10px;
 }
 
+/* Botões maiores no mobile para facilitar o toque */
 .btn-opt {
     background: #0f3460;
     border: 1px solid #4cc9f0;
     color: white;
-    padding: 10px;
-    border-radius: 5px;
+    padding: 15px;
+    /* Mais gordinho para o dedo */
+    border-radius: 8px;
     cursor: pointer;
+    font-size: 1rem;
     transition: 0.2s;
+    touch-action: manipulation;
+    /* Melhora resposta ao toque */
 }
 
 .btn-opt:hover {
@@ -106,7 +152,6 @@ h3 {
     transform: scale(0.95);
 }
 
-/* Feedback Visual */
 .correct {
     animation: flashGreen 0.5s;
 }
