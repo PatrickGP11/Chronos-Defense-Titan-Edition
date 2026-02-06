@@ -1,430 +1,400 @@
-// --- BANCO DE DADOS GIGANTE (Anti-Repetição) ---
-const fullWordsDB = [
-    // ANIMAIS
-    { cat: "Animal", word: "Elefante" }, { cat: "Animal", word: "Ornitorrinco" }, { cat: "Animal", word: "Preguiça" },
-    { cat: "Animal", word: "Camaleão" }, { cat: "Animal", word: "Canguru" }, { cat: "Animal", word: "Pinguim" },
-    { cat: "Animal", word: "Tubarão" }, { cat: "Animal", word: "Coruja" }, { cat: "Animal", word: "Hipopótamo" },
-    { cat: "Animal", word: "Suricato" }, { cat: "Animal", word: "Capivara" }, { cat: "Animal", word: "Pavão" },
+// script.js - GOD MODE (IMPOSSIBLE)
 
-    // OBJETOS
-    { cat: "Objeto", word: "Geladeira" }, { cat: "Objeto", word: "Microfone" }, { cat: "Objeto", word: "Guarda-chuva" },
-    { cat: "Objeto", word: "Liquidificador" }, { cat: "Objeto", word: "Seringa" }, { cat: "Objeto", word: "Algema" },
-    { cat: "Objeto", word: "Bumerangue" }, { cat: "Objeto", word: "Fralda" }, { cat: "Objeto", word: "Dado" },
-    { cat: "Objeto", word: "Extintor" }, { cat: "Objeto", word: "Telescópio" }, { cat: "Objeto", word: "Vassoura" },
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-    // PROFISSÕES
-    { cat: "Profissão", word: "Bombeiro" }, { cat: "Profissão", word: "Astronauta" }, { cat: "Profissão", word: "Palhaço" },
-    { cat: "Profissão", word: "Dentista" }, { cat: "Profissão", word: "Mágico" }, { cat: "Profissão", word: "Juiz" },
-    { cat: "Profissão", word: "Padeiro" }, { cat: "Profissão", word: "Detetive" }, { cat: "Profissão", word: "Gari" },
+let questionDeck = [];
+let gameRunning = false; // Controle do Estado do Jogo
 
-    // LUGARES
-    { cat: "Lugar", word: "Cinema" }, { cat: "Lugar", word: "Cemitério" }, { cat: "Lugar", word: "Hospital" },
-    { cat: "Lugar", word: "Deserto" }, { cat: "Lugar", word: "Padaria" }, { cat: "Lugar", word: "Circo" },
-    { cat: "Lugar", word: "Academia" }, { cat: "Lugar", word: "Biblioteca" }, { cat: "Lugar", word: "Praia" },
+function initDeck() {
+    questionDeck = JSON.parse(JSON.stringify(knowledgeBase));
+}
 
-    // PERSONAGENS
-    { cat: "Personagem", word: "Homem Aranha" }, { cat: "Personagem", word: "Batman" }, { cat: "Personagem", word: "Mickey Mouse" },
-    { cat: "Personagem", word: "Harry Potter" }, { cat: "Personagem", word: "Bob Esponja" }, { cat: "Personagem", word: "Shrek" },
-    { cat: "Personagem", word: "Darth Vader" }, { cat: "Personagem", word: "Chaves" }, { cat: "Personagem", word: "Goku" },
+// --- ESTADO DO JOGO ---
+const state = {
+    energy: 100,          // Começa baixo
+    lives: 5,             // Poucas vidas
+    wave: 1,
+    enemiesKilledInWave: 0,
+    frame: 0,
+    enemies: [],
+    towers: [],
+    projectiles: [],
+    currentQuestion: null,
+    baseTowerCost: 100,
+    currentTowerCost: 100
+};
 
-    // COMIDA
-    { cat: "Comida", word: "Lasanha" }, { cat: "Comida", word: "Sushi" }, { cat: "Comida", word: "Pipoca" },
-    { cat: "Comida", word: "Coxinha" }, { cat: "Comida", word: "Churrasco" }, { cat: "Comida", word: "Acarajé" },
-    { cat: "Comida", word: "Brócolis" }, { cat: "Comida", word: "Picolé" }, { cat: "Comida", word: "Ovo Frito" },
-
-    // ALEATÓRIOS
-    { cat: "Corpo Humano", word: "Umbigo" }, { cat: "Corpo Humano", word: "Cotovelo" }, { cat: "Instrumento", word: "Berimbau" },
-    { cat: "Filme", word: "Titanic" }, { cat: "Filme", word: "Vingadores" }, { cat: "Esporte", word: "Futebol" }
+const path = [
+    { x: 0, y: 100 }, { x: 200, y: 100 }, { x: 200, y: 300 },
+    { x: 500, y: 300 }, { x: 500, y: 100 }, { x: 700, y: 100 }, { x: 700, y: 400 }, { x: 800, y: 400 }
 ];
 
-// --- GESTÃO DE REDE (P2P) ---
-const party = {
-    peer: null,
-    myId: null,
-    myName: '',
-    isHost: false,
-    connections: [],
-    hostConn: null,
+// --- FUNÇÃO DE START ---
+function startGame() {
+    document.getElementById('start-screen').classList.add('hidden');
+    gameRunning = true;
 
-    init: function () {
-        const inputName = document.getElementById('my-nickname').value.trim();
-        this.myName = inputName || 'Jogador ' + Math.floor(Math.random() * 1000);
-    },
+    // Inicializa tudo
+    initDeck();
+    loadNewQuestion();
+    updateUI();
 
-    createRoom: function () {
-        this.init();
-        this.isHost = true;
-        this.peer = new Peer();
+    // Ativa o botão de compra
+    const btn = document.getElementById('btn-buy');
+    btn.onclick = buyTower;
+    btn.innerText = `Comprar Torre (${state.currentTowerCost}⚡)`;
 
-        this.peer.on('open', (id) => {
-            this.myId = id;
-            this.updateLobbyUI(id);
-            game.players = [{ id: id, name: this.myName, score: 0 }];
-            game.availableWords = [...fullWordsDB]; // Cópia para controle de repetição
-            this.renderPlayerList();
-            game.showScreen('screen-lobby');
-            document.getElementById('host-controls').classList.remove('hidden');
-            document.querySelector('.code-display').classList.remove('hidden');
-
-            // Ativa Wake Lock (Tela ligada)
-            requestWakeLock();
-        });
-
-        this.peer.on('connection', (conn) => {
-            conn.on('open', () => { setTimeout(() => conn.send({ type: 'REQUEST_INFO' }), 500); });
-            conn.on('data', (data) => this.handleData(data, conn));
-            conn.on('close', () => this.removePlayer(conn.peer));
-            this.connections.push(conn);
-        });
-    },
-
-    joinRoom: function () {
-        this.init();
-        const roomId = document.getElementById('room-code-input').value.trim();
-        if (!roomId) return alert("Digite o código da sala!");
-
-        this.isHost = false;
-        this.peer = new Peer();
-
-        this.peer.on('open', (id) => {
-            this.myId = id;
-            this.hostConn = this.peer.connect(roomId);
-            this.hostConn.on('open', () => {
-                game.showScreen('screen-lobby');
-                document.getElementById('guest-waiting-msg').classList.remove('hidden');
-                document.querySelector('.code-display').classList.add('hidden');
-                requestWakeLock();
-            });
-            this.hostConn.on('data', (data) => this.handleClientData(data));
-            this.hostConn.on('close', () => { alert("Sala encerrada."); location.reload(); });
-        });
-    },
-
-    // --- HOST HANDLER ---
-    handleData: function (data, conn) {
-        switch (data.type) {
-            case 'JOIN_INFO':
-                if (!game.players.find(p => p.id === conn.peer)) {
-                    game.players.push({ id: conn.peer, name: data.name, score: 0 });
-                    this.renderPlayerList();
-                    this.broadcast({ type: 'UPDATE_PLAYERS', list: game.players });
-                }
-                break;
-            case 'SEND_GUESS':
-                game.processGuess(conn.peer, data.text);
-                break;
-            case 'SEND_HINT': // Mestre (se não for host) enviando dica
-                game.reducePot(); // Dica custa pontos!
-                this.broadcast({ type: 'NEW_HINT', text: data.text, currentPot: game.roundPot });
-                game.addMsg(data.text, 'hint');
-                break;
-        }
-    },
-
-    // --- CLIENT HANDLER ---
-    handleClientData: function (data) {
-        switch (data.type) {
-            case 'REQUEST_INFO': this.hostConn.send({ type: 'JOIN_INFO', name: this.myName }); break;
-            case 'UPDATE_PLAYERS': game.updateLobbyList(data.list); break;
-            case 'GAME_START': game.startClientGame(data); break;
-            case 'NEW_HINT':
-                game.addMsg(data.text, 'hint');
-                game.updatePotUI(data.currentPot);
-                break;
-            case 'NEW_GUESS_NOTIFY': game.addMsg(data.text, 'guess'); break;
-            case 'ROUND_END': game.showResults(data); break;
-            case 'TIME_UPDATE': game.updateTimerUI(data.time); break;
-        }
-    },
-
-    broadcast: function (msg) {
-        this.connections.forEach(c => { if (c.open) c.send(msg); });
-    },
-
-    updateLobbyUI: function (id) { document.getElementById('display-room-id').innerText = id; },
-
-    renderPlayerList: function () {
-        const list = document.getElementById('lobby-player-list');
-        list.innerHTML = '';
-        const colors = ['#ff7675', '#74b9ff', '#55efc4', '#a29bfe', '#fab1a0', '#ffeaa7'];
-        game.players.forEach((p, index) => {
-            const isMe = p.id === this.myId;
-            const color = colors[index % colors.length];
-            list.innerHTML += `<li class="${isMe ? 'me' : ''}"><i class="ph ph-user${isMe ? '-circle' : ''}" style="color: ${color}; background: ${color}20;"></i><span>${p.name}</span></li>`;
-        });
-        const countSpan = document.getElementById('player-count');
-        if (countSpan) countSpan.innerText = `${game.players.length}/10`;
-    },
-
-    removePlayer: function (id) {
-        game.players = game.players.filter(p => p.id !== id);
-        this.connections = this.connections.filter(c => c.peer !== id);
-        this.renderPlayerList();
-        this.broadcast({ type: 'UPDATE_PLAYERS', list: game.players });
-    },
-
-    shareLink: function () { window.open(`https://wa.me/?text=Código da sala: *${this.myId}*`, '_blank'); },
-    copyCode: function () { navigator.clipboard.writeText(this.myId); alert("Copiado!"); },
-    quit: function () { if (confirm("Sair?")) location.reload(); }
-};
-
-// --- LÓGICA DO JOGO ---
-const game = {
-    players: [],
-    availableWords: [],
-    currentMasterId: null,
-    currentWord: null,
-    round: 1,
-    roundPot: 50, // Pontuação máxima da rodada
-    timerInterval: null,
-    timeLeft: 150, // 2:30 minutos em segundos
-
-    startGame: function () {
-        if (this.players.length < 2) return alert("Mínimo 2 jogadores!");
-
-        // Anti-Repetição: Recarrega se acabar
-        if (this.availableWords.length === 0) this.availableWords = [...fullWordsDB];
-
-        // Sorteia Mestre
-        const masterIndex = Math.floor(Math.random() * this.players.length);
-        const master = this.players[masterIndex];
-        this.currentMasterId = master.id;
-
-        // Sorteia e Remove Palavra (para não repetir)
-        const wordIndex = Math.floor(Math.random() * this.availableWords.length);
-        const wordObj = this.availableWords[wordIndex];
-        this.availableWords.splice(wordIndex, 1); // Remove da lista
-        this.currentWord = wordObj;
-
-        // Reset Pontuação da Rodada e Tempo
-        this.roundPot = 50;
-        this.timeLeft = 150; // 2:30
-
-        // Inicia Timer no Host
-        clearInterval(this.timerInterval);
-        this.timerInterval = setInterval(() => {
-            this.timeLeft--;
-            party.broadcast({ type: 'TIME_UPDATE', time: this.timeLeft });
-            this.updateTimerUI(this.timeLeft); // Atualiza local (Host)
-
-            if (this.timeLeft <= 0) {
-                this.endRoundTimeOut();
-            }
-        }, 1000);
-
-        // Envia dados iniciais
-        party.connections.forEach(conn => {
-            conn.send({
-                type: 'GAME_START',
-                masterName: master.name,
-                isMaster: conn.peer === this.currentMasterId,
-                word: conn.peer === this.currentMasterId ? wordObj : null,
-                roundNumber: this.round,
-                currentPot: this.roundPot
-            });
-        });
-
-        // Configura Host
-        this.startClientGame({
-            masterName: master.name,
-            isMaster: party.myId === this.currentMasterId,
-            word: party.myId === this.currentMasterId ? wordObj : null,
-            roundNumber: this.round,
-            currentPot: this.roundPot
-        });
-    },
-
-    startClientGame: function (data) {
-        this.showScreen('screen-game');
-        document.getElementById('game-chat').innerHTML = '<div class="system-msg">Rodada iniciada!</div>';
-
-        // --- ATUALIZA NÚMERO DA RODADA ---
-        document.getElementById('round-display').innerText = data.roundNumber;
-        this.updatePotUI(data.currentPot);
-
-        document.getElementById('guess-input').value = '';
-        document.getElementById('hint-input').value = '';
-
-        const roleDisplay = document.getElementById('role-display');
-
-        if (data.isMaster) {
-            roleDisplay.innerText = "VOCÊ É O MESTRE";
-            roleDisplay.className = "timer-pill role-master"; // Classe CSS rosa
-            document.getElementById('describer-controls').classList.remove('hidden');
-            document.getElementById('guesser-controls').classList.add('hidden');
-            document.getElementById('secret-word').innerText = data.word.word;
-            document.getElementById('secret-category').innerText = data.word.cat;
-        } else {
-            roleDisplay.innerText = "ADIVINHADOR";
-            roleDisplay.className = "timer-pill role-guesser"; // Classe CSS cinza/branca
-            document.getElementById('describer-controls').classList.add('hidden');
-            document.getElementById('guesser-controls').classList.remove('hidden');
-            document.getElementById('current-master-name').innerText = data.masterName;
-        }
-    },
-
-    reducePot: function () {
-        if (this.roundPot > 10) this.roundPot -= 5; // Mínimo de 10 pontos
-        this.updatePotUI(this.roundPot);
-    },
-
-    updatePotUI: function (val) {
-        // Exibe quanto a rodada vale em algum lugar (pode ser no chat ou topo)
-        // Vamos usar o chat como log
-        // Opcional: Criar elemento visual. Por enquanto, log no chat é bom.
-    },
-
-    updateTimerUI: function (seconds) {
-        const min = Math.floor(seconds / 60);
-        const sec = seconds % 60;
-        const timeString = `${min}:${sec < 10 ? '0' : ''}${sec}`;
-
-        // Vamos usar o espaço do "Placar" ou criar um badge de tempo
-        // Se você tiver um elemento com id 'time-display', use ele. 
-        // Vou injetar no header se não existir.
-        let timerBadge = document.getElementById('timer-badge');
-        if (!timerBadge) {
-            const header = document.querySelector('.game-header');
-            timerBadge = document.createElement('div');
-            timerBadge.id = 'timer-badge';
-            timerBadge.className = 'timer-pill';
-            header.appendChild(timerBadge);
-        }
-
-        timerBadge.innerText = `⏱ ${timeString} | Valendo: ${this.roundPot} pts`;
-
-        if (seconds <= 10) timerBadge.classList.add('timer-urgent');
-        else timerBadge.classList.remove('timer-urgent');
-    },
-
-    sendHint: function () {
-        const input = document.getElementById('hint-input');
-        const text = input.value.trim();
-        if (!text) return;
-
-        if (party.isHost) {
-            this.reducePot();
-            party.broadcast({ type: 'NEW_HINT', text: text, currentPot: this.roundPot });
-            this.addMsg(text, 'hint');
-        } else {
-            party.hostConn.send({ type: 'SEND_HINT', text: text });
-        }
-        input.value = '';
-    },
-
-    sendQuickHint: function (prefix) {
-        const input = document.getElementById('hint-input');
-        input.value = prefix + " ";
-        input.focus();
-    },
-
-    sendGuess: function () {
-        const input = document.getElementById('guess-input');
-        const text = input.value.trim();
-        if (!text) return;
-
-        if (party.isHost && party.myId !== this.currentMasterId) {
-            this.processGuess(party.myId, text);
-        } else if (!party.isHost) {
-            party.hostConn.send({ type: 'SEND_GUESS', text: text });
-        }
-        input.value = '';
-    },
-
-    processGuess: function (playerId, text) {
-        const player = this.players.find(p => p.id === playerId);
-        if (!player) return;
-
-        party.broadcast({ type: 'NEW_GUESS_NOTIFY', text: `${player.name}: ${text}` });
-        if (party.isHost) this.addMsg(`${player.name}: ${text}`, 'guess');
-
-        if (text.toLowerCase().trim() === this.currentWord.word.toLowerCase()) {
-            // ACERTOU!
-            clearInterval(this.timerInterval);
-
-            // Pontuação
-            player.score += this.roundPot; // Ganhador leva o pote
-
-            const master = this.players.find(p => p.id === this.currentMasterId);
-            if (master) master.score += this.roundPot; // Mestre TAMBÉM leva o pote (incentivo)
-
-            const resultData = {
-                winnerName: player.name,
-                correctWord: this.currentWord.word,
-                scores: this.players,
-                reason: 'WIN'
-            };
-
-            party.broadcast({ type: 'ROUND_END', ...resultData });
-            this.showResults(resultData);
-        }
-    },
-
-    endRoundTimeOut: function () {
-        clearInterval(this.timerInterval);
-        const resultData = {
-            winnerName: null,
-            correctWord: this.currentWord.word,
-            scores: this.players,
-            reason: 'TIMEOUT'
-        };
-        party.broadcast({ type: 'ROUND_END', ...resultData });
-        this.showResults(resultData);
-    },
-
-    addMsg: function (text, type) {
-        const chat = document.getElementById('game-chat');
-        const div = document.createElement('div');
-        div.className = `msg ${type}`;
-        div.innerText = text;
-        chat.appendChild(div);
-        chat.scrollTop = chat.scrollHeight;
-    },
-
-    showResults: function (data) {
-        this.showScreen('screen-result');
-        const title = document.getElementById('round-winner-display');
-
-        if (data.reason === 'TIMEOUT') {
-            title.innerHTML = `⌛ <b>Tempo Esgotado!</b><br>Ninguém acertou.<br>A palavra era: ${data.correctWord}`;
-            title.style.color = '#d63031';
-        } else {
-            title.innerHTML = `🎉 <b>${data.winnerName}</b> acertou!<br>A palavra era: ${data.correctWord}<br><small>Ganharam ${this.roundPot} pts!</small>`;
-            title.style.color = 'var(--primary)';
-        }
-
-        const list = document.getElementById('score-list');
-        list.innerHTML = '';
-        data.scores.sort((a, b) => b.score - a.score).forEach(p => {
-            list.innerHTML += `<li>${p.name}: <b>${p.score}</b></li>`;
-        });
-
-        if (party.isHost) {
-            document.getElementById('btn-next-round').classList.remove('hidden');
-            document.getElementById('waiting-host-msg').classList.add('hidden');
-        } else {
-            document.getElementById('btn-next-round').classList.add('hidden');
-            document.getElementById('waiting-host-msg').classList.remove('hidden');
-        }
-    },
-
-    nextRound: function () {
-        this.round++;
-        this.startGame();
-    },
-
-    updateLobbyList: function (list) { game.players = list; party.renderPlayerList(); },
-    showScreen: function (id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-    }
-};
-
-// --- Wake Lock API (Manter tela ligada) ---
-let wakeLock = null;
-async function requestWakeLock() {
-    try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) { }
+    // Começa o loop
+    loop();
 }
-document.addEventListener('visibilitychange', async () => {
-    if (wakeLock !== null && document.visibilityState === 'visible') await requestWakeLock();
-});
+
+// --- LÓGICA EDUCACIONAL ---
+function loadNewQuestion() {
+    questionDeck = questionDeck.filter(cat => cat.questions.length > 0);
+    if (questionDeck.length === 0) initDeck();
+
+    const catIdx = Math.floor(Math.random() * questionDeck.length);
+    const category = questionDeck[catIdx];
+
+    const qIdx = Math.floor(Math.random() * category.questions.length);
+    const questionData = category.questions[qIdx];
+
+    state.currentQuestion = { ...questionData, correctIndex: questionData.a };
+    category.questions.splice(qIdx, 1);
+
+    document.getElementById('cat-tag').innerText = category.category;
+    document.getElementById('cat-tag').style.color = category.color;
+    document.getElementById('q-text').innerText = state.currentQuestion.q;
+
+    const optsDiv = document.getElementById('options');
+    optsDiv.innerHTML = '';
+
+    state.currentQuestion.options.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-opt';
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(index, btn);
+        optsDiv.appendChild(btn);
+    });
+}
+
+function checkAnswer(index, btnElement) {
+    if (!gameRunning) return; // Não deixa responder se não começou
+
+    const container = document.getElementById('quiz-container');
+
+    if (index === state.currentQuestion.correctIndex) {
+        // --- NERF: Recompensa muito baixa ---
+        state.energy += 30; // Era 60, agora é 30. Tem que suar!
+        updateUI();
+        container.classList.add('correct');
+        setTimeout(() => container.classList.remove('correct'), 500);
+        loadNewQuestion();
+    } else {
+        // --- PUNIÇÃO: Perda e Fantasma ---
+        state.energy = Math.max(0, state.energy - 25);
+        spawnEnemy('GHOST');
+        updateUI();
+        container.classList.add('wrong');
+        document.body.style.backgroundColor = '#660000';
+        setTimeout(() => {
+            container.classList.remove('wrong');
+            document.body.style.backgroundColor = '#0b0c10';
+        }, 300);
+    }
+}
+
+// --- SISTEMA DE INIMIGOS ---
+function spawnEnemy(forcedType = null) {
+    state.enemies.push(new Enemy(forcedType));
+}
+
+class Enemy {
+    constructor(forcedType = null) {
+        this.wpIndex = 0;
+        this.x = path[0].x;
+        this.y = path[0].y;
+
+        // Dificuldade: 20% mais forte a cada onda (era 15%)
+        const difficultyMult = Math.pow(1.20, state.wave - 1);
+
+        let type = forcedType;
+        if (!type) {
+            const rand = Math.random();
+            const isBossWave = state.wave % 5 === 0;
+
+            if (isBossWave && rand < 0.3) type = 'BOSS'; // Mais chance de Boss
+            else if (state.wave >= 2 && rand < 0.35) type = 'SPEEDY'; // Mais Speedys
+            else if (state.wave >= 2 && rand < 0.35) type = 'TANK';
+            else type = 'NORMAL';
+        }
+
+        if (type === 'GHOST') {
+            this.radius = 10;
+            this.color = '#dfe6e9';
+            this.speed = 4.5; // Quase impossível de ver
+            this.hp = 25 * difficultyMult;
+            this.maxHp = this.hp;
+            this.reward = 2;
+        }
+        else if (type === 'BOSS') {
+            this.radius = 32;
+            this.color = '#8e44ad';
+            this.speed = 0.6; // Um pouco mais rápido que antes
+            this.hp = 800 * difficultyMult; // Tanque de guerra
+            this.maxHp = this.hp;
+            this.reward = 999; // Instakill
+        }
+        else if (type === 'TANK') {
+            this.radius = 20;
+            this.color = '#0984e3';
+            this.speed = 0.9;
+            this.hp = 200 * difficultyMult;
+            this.maxHp = this.hp;
+            this.reward = 5;
+        }
+        else if (type === 'SPEEDY') {
+            this.radius = 8;
+            this.color = '#f1c40f';
+            this.speed = 3.0 + (state.wave * 0.2); // Muito rápido
+            this.hp = 30 * difficultyMult;
+            this.maxHp = this.hp;
+            this.reward = 1;
+        }
+        else {
+            this.radius = 12;
+            this.color = '#e74c3c';
+            this.speed = 1.5 + (state.wave * 0.1); // Base mais rápida
+            this.hp = 60 * difficultyMult;
+            this.maxHp = this.hp;
+            this.reward = 1;
+        }
+        this.type = type;
+    }
+
+    update() {
+        const target = path[this.wpIndex + 1];
+        if (!target) return;
+
+        const dx = target.x - this.x;
+        const dy = target.y - this.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < this.speed) {
+            this.x = target.x;
+            this.y = target.y;
+            this.wpIndex++;
+            if (this.wpIndex >= path.length - 1) {
+                state.lives -= this.reward;
+                this.hp = 0;
+                updateUI();
+                if (state.lives <= 0) {
+                    alert(`💀 GAME OVER 💀\nOnda: ${state.wave}`);
+                    location.reload();
+                }
+            }
+        } else {
+            this.x += (dx / dist) * this.speed;
+            this.y += (dy / dist) * this.speed;
+        }
+    }
+
+    draw() {
+        ctx.globalAlpha = this.type === 'GHOST' ? 0.5 : 1.0;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (this.type === 'BOSS' || this.type === 'TANK') {
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        const hpPercent = Math.max(0, this.hp / this.maxHp);
+        ctx.fillStyle = 'black';
+        ctx.fillRect(this.x - 12, this.y - (this.radius + 8), 24, 4);
+        ctx.fillStyle = hpPercent > 0.5 ? '#2ecc71' : '#c0392b';
+        ctx.fillRect(this.x - 12, this.y - (this.radius + 8), 24 * hpPercent, 4);
+        ctx.globalAlpha = 1.0;
+    }
+}
+
+class Tower {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.range = 130; // Alcance reduzido
+        this.cooldown = 0;
+    }
+
+    update() {
+        if (this.cooldown > 0) this.cooldown--;
+        else {
+            const target = state.enemies.find(e => Math.hypot(e.x - this.x, e.y - this.y) < this.range);
+            if (target) {
+                state.projectiles.push(new Projectile(this.x, this.y, target));
+                // --- NERF: Cadência de Tiro ---
+                this.cooldown = 40; // Atira MUITO mais devagar (antes era 25)
+            }
+        }
+    }
+
+    draw() {
+        ctx.fillStyle = '#45a29e';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(102, 252, 241, 0.1)';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+}
+
+class Projectile {
+    constructor(x, y, target) {
+        this.x = x; this.y = y; this.target = target;
+        this.speed = 15;
+        this.damage = 25;
+        this.active = true;
+    }
+    update() {
+        if (!this.target || this.target.hp <= 0) {
+            this.active = false;
+            return;
+        }
+        const dx = this.target.x - this.x;
+        const dy = this.target.y - this.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < this.speed) {
+            this.target.hp -= this.damage;
+            this.active = false;
+        } else {
+            this.x += (dx / dist) * this.speed;
+            this.y += (dy / dist) * this.speed;
+        }
+    }
+    draw() {
+        ctx.fillStyle = '#66fcf1';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// --- ENGINE ---
+function updateUI() {
+    document.getElementById('energy-val').innerText = Math.floor(state.energy);
+    document.getElementById('lives-val').innerText = state.lives;
+
+    if (gameRunning) {
+        const btn = document.getElementById('btn-buy');
+        btn.innerText = `Comprar Torre (${state.currentTowerCost}⚡)`;
+        btn.style.opacity = state.energy < state.currentTowerCost ? '0.5' : '1';
+    }
+}
+
+function buyTower() {
+    if (!gameRunning) return;
+
+    if (state.energy >= state.currentTowerCost) {
+        canvas.style.cursor = 'crosshair';
+        canvas.style.borderColor = '#66fcf1';
+
+        const clickHandler = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            }
+
+            const realX = (clientX - rect.left) * scaleX;
+            const realY = (clientY - rect.top) * scaleY;
+
+            state.towers.push(new Tower(realX, realY));
+            state.energy -= state.currentTowerCost;
+
+            // --- INFLAÇÃO PESADA ---
+            state.currentTowerCost += 80; // Era +50, agora +80. Impossível comprar muitas.
+
+            updateUI();
+
+            canvas.style.cursor = 'default';
+            canvas.style.borderColor = '#45a29e';
+            canvas.removeEventListener('click', clickHandler);
+        };
+        canvas.addEventListener('click', clickHandler);
+    } else {
+        const btn = document.getElementById('btn-buy');
+        btn.style.backgroundColor = '#c0392b';
+        setTimeout(() => btn.style.backgroundColor = '#2ecc71', 200);
+    }
+}
+
+function loop() {
+    if (!gameRunning) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Mapa
+    ctx.strokeStyle = '#0b0c10';
+    ctx.lineWidth = 45;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    path.forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.stroke();
+
+    ctx.strokeStyle = '#1f2833';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    if (state.enemiesKilledInWave >= (15 + state.wave * 3)) {
+        state.wave++;
+        state.enemiesKilledInWave = 0;
+    }
+
+    // Spawn Rate Extremamente Rápido
+    const spawnRate = Math.max(20, 100 - (state.wave * 10)); // Metralhadora de inimigos
+
+    if (state.frame % spawnRate === 0) {
+        spawnEnemy();
+    }
+
+    for (let i = state.enemies.length - 1; i >= 0; i--) {
+        const e = state.enemies[i];
+        e.update();
+        e.draw();
+        if (e.hp <= 0) {
+            state.enemies.splice(i, 1);
+            state.enemiesKilledInWave++;
+        }
+    }
+
+    state.towers.forEach(t => { t.update(); t.draw(); });
+
+    for (let i = state.projectiles.length - 1; i >= 0; i--) {
+        const p = state.projectiles[i];
+        p.update();
+        p.draw();
+        if (!p.active) state.projectiles.splice(i, 1);
+    }
+
+    state.frame++;
+    if (state.lives > 0) requestAnimationFrame(loop);
+}
+
+// Inicializa, mas NÃO roda o loop ainda
+
+document.getElementById('btn-buy').onclick = null; // Desativa botão até começar
